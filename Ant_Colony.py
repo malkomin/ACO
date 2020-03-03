@@ -41,7 +41,7 @@ def create_environment(cities, path):
 
 env, phe = create_environment(cities,path)
 
-class ant:
+class Ant:
     def __init__(self,number, env=env, phe=phe,
                  start='A', end='E',
                  alpha=0.5, beta=0.5):
@@ -53,7 +53,7 @@ class ant:
         :param end: Destination point
         :param alpha: Constant for calculate probability  default = 0.5
         :param beta: Constant for calculate probability  default = 0.5
-        After 0.6 becoming non-realistic like all ants are so smart or dummy,they always chooses same way that other ants choose
+        After 0.6 becoming non-realistic like all ants are so smart or dummy,they always chooses same way that other ants choice
         :param road: Next possible cities
         :param cities: All cities
 
@@ -63,6 +63,7 @@ class ant:
         self.env, self.phe = env, phe
         self.alpha, self.beta = alpha, beta
         self.cities = list(self.env.columns)
+        self.start = start
         self.current_city = start
         self.destination = end
         self.route = [self.current_city]
@@ -77,7 +78,6 @@ class ant:
         """
         if self.current_city == self.destination: #Check if ant reaches the destination point
             return
-        #if self.current_city in self.road: #If ant
         self.road.remove(self.current_city)
         self.distances = env.loc[self.current_city, env.loc[self.current_city] > 0][self.road]  # Distances matrix
         self.pheromones = phe.loc[self.current_city, env.loc[self.current_city] > 0][self.road]  # Pheromones matrix
@@ -111,6 +111,7 @@ class ant:
         return result
 
 
+
 class Ant_Colony:
     def __init__(self, ant_count=100, env =env,phe = phe):
         """
@@ -121,9 +122,8 @@ class Ant_Colony:
         """
         self.count = ant_count
         self.ants = []
-        self.total_routes = {}
         for i in range(ant_count):
-            self.ants.append(ant(i+1,env,phe))
+            self.ants.append(Ant(i+1,env,phe))
 
 
     def negative_pheromone_update(self,ant ,env_rate=0.01):
@@ -145,13 +145,18 @@ class Ant_Colony:
     def start(self,time = 10):
         """
         Starts scavenging and ants move
-        :param time: How many times ant will move
+        :param time: How many times ant will (iteration)
         :return:
         """
-        for ant in self.ants:
-            for t in range(time):
-                ant.move() #Ant move
-                self.negative_pheromone_update(ant) #Update pheromone on passed ways
+        for t in range(time):
+            for ant in self.ants:
+                ant.current_city = ant.start
+                ant.route = [ant.current_city]
+                ant.road = ant.cities.copy()
+                for i in range(len(ant.cities)):
+                    ant.move() #Ant move
+                    self.negative_pheromone_update(ant) #Update pheromone on passed ways
+            
 
     def route(self):
         """
@@ -160,11 +165,17 @@ class Ant_Colony:
         for ant in self.ants:
             print("Ant ", ant.number, " route: ", ant.route)
 
-colony = Ant_Colony(10) #colony
-colony.start()
+colony = Ant_Colony(50) #colony
+colony.start(10)
 colony.route()
 cost = [(a.cost(), a.route) for a in colony.ants]
 print("Cost : " , cost )
+idx = 0
+list1 = []
+for i in range(len(cost)):
+    list1.append(cost[i][0])
+idx = list1.index(min(list1))
+print("Best route : ", cost[idx])
 print(phe)
 
 
